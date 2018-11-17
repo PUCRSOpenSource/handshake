@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	struct ifreq if_idx, if_mac, ifopts;
 	char ifName[IFNAMSIZ];
 	struct sockaddr_ll socket_address;
-	int sockfd, numbytes;
+	int sockfd;
 
 	/* Get interface name */
 	if (argc > 1)

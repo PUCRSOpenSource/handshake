@@ -27,7 +27,7 @@ union eth_buffer buffer_u;
 void envia_reply(union eth_buffer* buffer_u, char ifName[]){
 	struct ifreq if_idx, if_mac, ifopts;
 	struct sockaddr_ll socket_address;
-	int sockfd, numbytes;
+	int sockfd;
 
 	/* Open RAW socket */
 	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)

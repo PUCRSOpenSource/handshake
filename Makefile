@@ -9,8 +9,14 @@ send: send_raw.c
 recv: recv_raw.c
 	$(CC) -o $@ $^ $(CFLAGS)
 
-.PHONY: clean
+.PHONY: clean server client
 
 clean:
 	rm -f send
 	rm -f recv
+
+server: recv
+	sudo ./recv wlp1s0
+
+client: send
+	sudo ./send wlp1s0
