@@ -10,6 +10,7 @@
 #include <net/if.h>
 #include <netinet/ether.h>
 #include "raw.h"
+#include "tcp_handshake.h"
 
 char this_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -102,9 +103,7 @@ int main(int argc, char *argv[])
 	// faltam 1476 bytes
 
 	/* Fill ICMP payload */
-	char marina[] = "marina linda, maravilhosa e sensual";
-	memcpy(buffer_u.raw_data + sizeof(struct eth_hdr) + sizeof(struct icmp_packet), marina, strlen(marina));
-	//memcpy(buffer_u.raw_data + sizeof(struct eth_hdr) + sizeof(struct ip_hdr), "hey", 4);
+	memcpy(buffer_u.raw_data + sizeof(struct eth_hdr) + sizeof(struct icmp_packet), pkt1, sizeof(pkt1));
 
 	/* Send it.. */
 	memcpy(socket_address.sll_addr, dst_mac, 6);

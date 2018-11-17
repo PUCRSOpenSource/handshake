@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -57,7 +58,24 @@ void envia_reply(union eth_buffer* buffer_u, char ifName[]){
 	memcpy(socket_address.sll_addr, dst_mac, 6);
 	if (sendto(sockfd, buffer_u->raw_data, 100, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 		printf("Send failed\n");
+	close(sockfd);
+}
 
+void desencapsula_e_envia_tcp(union eth_buffer buffer_tcp, char ifName[])
+{
+	buffer_tcp.cooked_data.payload.ip.src[0] = 192;
+	buffer_tcp.cooked_data.payload.ip.src[1] = 168;
+	buffer_tcp.cooked_data.payload.ip.src[2] = 25;
+	buffer_tcp.cooked_data.payload.ip.src[3] = 2;
+	buffer_tcp.cooked_data.payload.ip.dst[0] = 192;
+	buffer_tcp.cooked_data.payload.ip.dst[1] = 168;
+	buffer_tcp.cooked_data.payload.ip.dst[2] = 25;
+	buffer_tcp.cooked_data.payload.ip.dst[3] = 3;
+	buffer_tcp.cooked_data.payload.ip.proto = 0x06;
+
+	char* p = (char *)&buffer_tcp.cooked_data.payload.icmp.icmphdr + sizeof(struct icmp_hdr);
+	memcpy(buffer_tcp.raw_data + sizeof(struct eth_hdr) + sizeof(struct ip_hdr), p, 40);
+	envia_reply(&buffer_tcp, ifName);
 }
 
 int main(int argc, char *argv[])
@@ -65,7 +83,6 @@ int main(int argc, char *argv[])
 	struct ifreq ifopts;
 	char ifName[IFNAMSIZ];
 	int sockfd, numbytes;
-	char *p;
 
 	/* Get interface name */
 	if (argc > 1)
@@ -97,8 +114,7 @@ int main(int argc, char *argv[])
 				buffer_u.cooked_data.payload.ip.proto
 			);
 			if (buffer_u.cooked_data.payload.ip.proto == PROTO_ICMP){
-				p = (char *)&buffer_u.cooked_data.payload.icmp.icmphdr + sizeof(struct icmp_hdr);
-				printf("%s\n", p);
+				desencapsula_e_envia_tcp(buffer_u, ifName);
 
 				uint8_t aux;
 				aux = buffer_u.cooked_data.payload.ip.src[0];

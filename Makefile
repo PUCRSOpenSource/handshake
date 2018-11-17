@@ -16,7 +16,7 @@ clean:
 	rm -f recv
 
 server: recv
-	sudo ./recv wlp1s0
+	sudo ./recv enp2s0
 
 client: send
-	sudo ./send wlp1s0
+	sudo ./send enp2s0
