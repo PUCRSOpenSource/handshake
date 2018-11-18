@@ -79,6 +79,12 @@ void desencapsula_e_envia_tcp(union eth_buffer buffer_tcp, char ifName[])
 
 	char* p = (char *)&buffer_tcp.cooked_data.payload.icmp.icmphdr + sizeof(struct icmp_hdr);
 	memcpy(buffer_tcp.raw_data + sizeof(struct eth_hdr) + sizeof(struct ip_hdr), p, 40);
+
+	printf("source: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.source));
+	printf("dest: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.dest));
+	printf("seq: %d\n", buffer_tcp.cooked_data.payload.tcp.tcphdr.seq);
+	printf("ack_seq: %d\n", buffer_tcp.cooked_data.payload.tcp.tcphdr.ack_seq);
+
 	envia_reply(&buffer_tcp, ifName);
 }
 
