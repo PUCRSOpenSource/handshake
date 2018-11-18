@@ -16,7 +16,7 @@ clean:
 	rm -f recv
 
 server: recv
-	sudo ./recv enp2s0
+	sudo ./recv enp2s0 192.168.25.2
 
 client: send
 	sudo ./send enp2s0

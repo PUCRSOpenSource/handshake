@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <net/if.h>
 #include <netinet/ether.h>
+#include <ifaddrs.h>
 #include "raw.h"
 #include "tcp_handshake.h"
 
@@ -17,7 +19,29 @@ char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char dst_mac[6] =	{0x08, 0x00, 0x27, 0xbb, 0x4e, 0xf6};
 char src_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
 
+struct in_addr meu_ip;
+
 union eth_buffer buffer_u;
+
+void obter_ip(char ifName[])
+{
+	struct ifaddrs* addrs;
+	getifaddrs(&addrs);
+	struct ifaddrs* tmp = addrs;
+
+	while (tmp)
+	{
+		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+		{
+			struct sockaddr_in *pAddr = (struct sockaddr_in *)tmp->ifa_addr;
+			if (strcmp(tmp->ifa_name, ifName) == 0)
+				meu_ip = pAddr->sin_addr;
+		}
+		tmp = tmp->ifa_next;
+	}
+
+	freeifaddrs(addrs);
+}
 
 uint32_t ipchksum(uint8_t *packet)
 {
@@ -69,6 +93,9 @@ int main(int argc, char *argv[])
 		perror("SIOCGIFHWADDR");
 	memcpy(this_mac, if_mac.ifr_hwaddr.sa_data, 6);
 
+	/* Obtem IP da interface de rede */
+	obter_ip(ifName);
+
 	/* End of configuration. Now we can send data using raw sockets. */
 
 	/* Fill the Ethernet frame header */
@@ -85,10 +112,7 @@ int main(int argc, char *argv[])
 	buffer_u.cooked_data.payload.ip.ttl = 50;
 	buffer_u.cooked_data.payload.ip.proto = 0x01;
 	buffer_u.cooked_data.payload.ip.sum = htons(0x0000);
-	buffer_u.cooked_data.payload.ip.src[0] = 10;
-	buffer_u.cooked_data.payload.ip.src[1] = 0;
-	buffer_u.cooked_data.payload.ip.src[2] = 2;
-	buffer_u.cooked_data.payload.ip.src[3] = 15;
+	memcpy(buffer_u.cooked_data.payload.ip.src, &meu_ip.s_addr, 4);
 	buffer_u.cooked_data.payload.ip.dst[0] = 192;
 	buffer_u.cooked_data.payload.ip.dst[1] = 168;
 	buffer_u.cooked_data.payload.ip.dst[2] = 25;
