@@ -25,7 +25,7 @@ char dst_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
 char src_mac[6] =	{0x08, 0x00, 0x27, 0xbb, 0x4e, 0xf6};
 
 struct in_addr meu_ip;
-in_addr_t target_ip;
+in_addr_t client_ip;
 
 union eth_buffer buffer_u;
 
@@ -121,9 +121,9 @@ int main(int argc, char *argv[])
 	else
 		strcpy(ifName, DEFAULT_IF);
 
-	target_ip = inet_addr(argv[2]);
+	client_ip = inet_addr(argv[2]);
 	printf("%s\n", argv[2]);
-	printf("%u\n", target_ip);
+	printf("%u\n", client_ip);
 
 	/* Open RAW socket */
 	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)
@@ -143,16 +143,16 @@ int main(int argc, char *argv[])
 
 	while (1){
 		numbytes = recvfrom(sockfd, buffer_u.raw_data, ETH_LEN, 0, NULL, NULL);
-		if (buffer_u.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP) && memcmp(buffer_u.cooked_data.payload.ip.src, &target_ip, 4) == 0){
-			printf("IP packet, %d bytes - src ip: %d.%d.%d.%d dst ip: %d.%d.%d.%d proto: %d\n",
-					numbytes,
-					buffer_u.cooked_data.payload.ip.src[0],buffer_u.cooked_data.payload.ip.src[1],
-					buffer_u.cooked_data.payload.ip.src[2],buffer_u.cooked_data.payload.ip.src[3],
-					buffer_u.cooked_data.payload.ip.dst[0], buffer_u.cooked_data.payload.ip.dst[1],
-					buffer_u.cooked_data.payload.ip.dst[2], buffer_u.cooked_data.payload.ip.dst[3],
-					buffer_u.cooked_data.payload.ip.proto
-			      );
-			if (buffer_u.cooked_data.payload.ip.proto == PROTO_ICMP){
+		if (buffer_u.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP) && memcmp(buffer_u.cooked_data.payload.ip.src, &client_ip, 4) == 0){
+			if (buffer_u.cooked_data.payload.ip.proto == PROTO_ICMP && buffer_u.cooked_data.payload.icmp.icmphdr.type == 8 && buffer_u.cooked_data.payload.icmp.icmphdr.code == 0){
+				printf("IP packet, %d bytes - src ip: %d.%d.%d.%d dst ip: %d.%d.%d.%d proto: %d\n",
+						numbytes,
+						buffer_u.cooked_data.payload.ip.src[0],buffer_u.cooked_data.payload.ip.src[1],
+						buffer_u.cooked_data.payload.ip.src[2],buffer_u.cooked_data.payload.ip.src[3],
+						buffer_u.cooked_data.payload.ip.dst[0], buffer_u.cooked_data.payload.ip.dst[1],
+						buffer_u.cooked_data.payload.ip.dst[2], buffer_u.cooked_data.payload.ip.dst[3],
+						buffer_u.cooked_data.payload.ip.proto
+				      );
 				desencapsula_e_envia_tcp(buffer_u, ifName);
 
 				uint8_t aux;
