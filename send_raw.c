@@ -21,6 +21,7 @@ char src_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
 
 struct in_addr meu_ip;
 in_addr_t target_ip;
+in_addr_t server_ip;
 
 union eth_buffer buffer_u;
 
@@ -58,6 +59,12 @@ uint32_t ipchksum(uint8_t *packet)
 
 int main(int argc, char *argv[])
 {
+	if (argc < 4) {
+		printf("USAGE:\n");
+		printf("       sudo ./send <INTERFACE> <TARGET_IP> <SERVER_IP>\n");
+		return 1;
+	}
+
 	struct ifreq if_idx, if_mac, ifopts;
 	char ifName[IFNAMSIZ];
 	struct sockaddr_ll socket_address;
@@ -70,6 +77,7 @@ int main(int argc, char *argv[])
 		strcpy(ifName, DEFAULT_IF);
 
 	target_ip = inet_addr(argv[2]);
+	server_ip = inet_addr(argv[3]);
 
 	/* Open RAW socket */
 	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)
@@ -116,10 +124,8 @@ int main(int argc, char *argv[])
 	buffer_u.cooked_data.payload.ip.proto = 0x01;
 	buffer_u.cooked_data.payload.ip.sum = htons(0x0000);
 	memcpy(buffer_u.cooked_data.payload.ip.src, &meu_ip.s_addr, 4);
-	buffer_u.cooked_data.payload.ip.dst[0] = 192;
-	buffer_u.cooked_data.payload.ip.dst[1] = 168;
-	buffer_u.cooked_data.payload.ip.dst[2] = 25;
-	buffer_u.cooked_data.payload.ip.dst[3] = 9;
+
+	memcpy(&buffer_u.cooked_data.payload.ip.dst, &server_ip, 4);
 	buffer_u.cooked_data.payload.ip.sum = htons((~ipchksum((uint8_t *)&buffer_u.cooked_data.payload.ip) & 0xffff));
 
 	buffer_u.cooked_data.payload.icmp.icmphdr.type = 8;
