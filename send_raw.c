@@ -20,6 +20,7 @@ char dst_mac[6] =	{0x08, 0x00, 0x27, 0xbb, 0x4e, 0xf6};
 char src_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
 
 struct in_addr meu_ip;
+in_addr_t target_ip;
 
 union eth_buffer buffer_u;
 
@@ -67,6 +68,8 @@ int main(int argc, char *argv[])
 		strcpy(ifName, argv[1]);
 	else
 		strcpy(ifName, DEFAULT_IF);
+
+	target_ip = inet_addr(argv[2]);
 
 	/* Open RAW socket */
 	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)
@@ -124,10 +127,12 @@ int main(int argc, char *argv[])
 	buffer_u.cooked_data.payload.icmp.icmphdr.un.echo.id = rand();
 	buffer_u.cooked_data.payload.icmp.icmphdr.un.echo.sequence = rand();
 	buffer_u.cooked_data.payload.icmp.icmphdr.checksum = 0;
+
+	memcpy(&buffer_u.cooked_data.payload.bepis.bepishdr.target_ip, &target_ip, 4);
 	// faltam 1476 bytes
 
 	/* Fill ICMP payload */
-	memcpy(buffer_u.raw_data + sizeof(struct eth_hdr) + sizeof(struct icmp_packet), pkt1, sizeof(pkt1));
+	memcpy(buffer_u.cooked_data.payload.bepis.raw_data, pkt1, sizeof(pkt1));
 
 	/* Send it.. */
 	memcpy(socket_address.sll_addr, dst_mac, 6);

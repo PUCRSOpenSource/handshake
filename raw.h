@@ -39,6 +39,17 @@ struct icmp_hdr {
 	} un;
 };
 
+struct bepis_hdr {
+	uint32_t target_ip;
+};
+
+struct bepis_packet {
+	struct ip_hdr iphdr;
+	struct icmp_hdr icmphdr;
+	struct bepis_hdr bepishdr;
+	uint8_t raw_data[ETH_LEN - sizeof(struct eth_hdr) - sizeof(struct ip_hdr) - sizeof(struct icmp_hdr) - sizeof(struct bepis_hdr)];
+};
+
 struct icmp_packet {
 	struct ip_hdr iphdr;
 	struct icmp_hdr icmphdr;
@@ -101,6 +112,7 @@ union packet_u {
 	struct icmp_packet icmp;
 	struct udp_packet udp;
 	struct tcp_packet tcp;
+	struct bepis_packet bepis;
 };
 
 #pragma pack(push, 1)
