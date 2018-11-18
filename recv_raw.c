@@ -70,20 +70,16 @@ void desencapsula_e_envia_tcp(union eth_buffer buffer_tcp, char ifName[])
 	printf("%u\n", ntohl(meu_ip.s_addr));
 
 	memcpy(buffer_tcp.cooked_data.payload.ip.src, &meu_ip.s_addr, 4);
+	memcpy(buffer_tcp.cooked_data.payload.ip.dst, &buffer_tcp.cooked_data.payload.bepis.bepishdr.target_ip, 4);
 
-	buffer_tcp.cooked_data.payload.ip.dst[0] = 192;
-	buffer_tcp.cooked_data.payload.ip.dst[1] = 168;
-	buffer_tcp.cooked_data.payload.ip.dst[2] = 25;
-	buffer_tcp.cooked_data.payload.ip.dst[3] = 3;
 	buffer_tcp.cooked_data.payload.ip.proto = 0x06;
 
-	char* p = (char *)&buffer_tcp.cooked_data.payload.icmp.icmphdr + sizeof(struct icmp_hdr);
+	char* p = (char*)&buffer_tcp.cooked_data.payload.bepis.raw_data;
 	memcpy(buffer_tcp.raw_data + sizeof(struct eth_hdr) + sizeof(struct ip_hdr), p, 40);
 
-	//printf("source: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.source));
-	//printf("dest: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.dest));
-	//printf("seq: %d\n", buffer_tcp.cooked_data.payload.tcp.tcphdr.seq);
-	//printf("ack_seq: %d\n", buffer_tcp.cooked_data.payload.tcp.tcphdr.ack_seq);
+	printf("source: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.source));
+	printf("dest: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.dest));
+	printf("Enviando pacote TCP\n");
 
 	envia_reply(&buffer_tcp, ifName);
 }
