@@ -16,8 +16,8 @@
 
 char this_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-char dst_mac[6] =	{0x08, 0x00, 0x27, 0xbb, 0x4e, 0xf6};
-char src_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
+char dst_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
+char src_mac[6] =	{0x54, 0xbf, 0x64, 0xf4, 0x2c, 0x0d};
 
 struct in_addr meu_ip;
 in_addr_t target_ip;
@@ -55,6 +55,34 @@ uint32_t ipchksum(uint8_t *packet)
 	while (sum & 0xffff0000)
 		sum = (sum & 0xffff) + (sum >> 16);
 	return sum;
+}
+
+void monitora_por_reply(char ifName[])
+{
+	struct ifreq ifopts;
+	int sockfd;
+
+	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)
+		perror("socket");
+
+	strncpy(ifopts.ifr_name, ifName, IFNAMSIZ-1);
+	ioctl(sockfd, SIOCGIFFLAGS, &ifopts);
+	ifopts.ifr_flags |= IFF_PROMISC;
+	ioctl(sockfd, SIOCSIFFLAGS, &ifopts);
+
+	while (1){
+		recvfrom(sockfd, buffer_u.raw_data, ETH_LEN, 0, NULL, NULL);
+		if (buffer_u.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP) && memcmp(buffer_u.cooked_data.payload.ip.src, &server_ip, 4) == 0
+				&& buffer_u.cooked_data.payload.icmp.icmphdr.type == 0
+				&& buffer_u.cooked_data.payload.icmp.icmphdr.code == 0){
+
+			struct tcp_hdr* p = (struct tcp_hdr*) buffer_u.cooked_data.payload.bepis.raw_data;
+
+			printf("source: %d\n", ntohs(p->source));
+			printf("dest: %d\n", ntohs(p->dest));
+			break;
+		}
+	}
 }
 
 int main(int argc, char *argv[])
@@ -144,6 +172,8 @@ int main(int argc, char *argv[])
 	memcpy(socket_address.sll_addr, dst_mac, 6);
 	if (sendto(sockfd, buffer_u.raw_data, 100, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 		printf("Send failed\n");
+
+	monitora_por_reply(ifName);
 
 
 	return 0;

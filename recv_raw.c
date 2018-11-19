@@ -21,8 +21,8 @@
 
 char this_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-char dst_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
-char src_mac[6] =	{0x08, 0x00, 0x27, 0xbb, 0x4e, 0xf6};
+char dst_mac[6] =	{0x54, 0xbf, 0x64, 0xf4, 0x2c, 0x0d};
+char src_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
 
 struct in_addr meu_ip;
 in_addr_t client_ip;
@@ -169,8 +169,15 @@ int main(int argc, char *argv[])
 				buffer_u.cooked_data.payload.icmp.icmphdr.type = 0;
 				buffer_u.cooked_data.payload.icmp.icmphdr.code = 0;
 				buffer_u.cooked_data.payload.icmp.icmphdr.un.echo.id = rand();
-				buffer_u.cooked_data.payload.icmp.icmphdr.un.echo.sequence = rand();
+				buffer_u.cooked_data.payload.icmp.icmphdr.un.echo.sequence++;
 				buffer_u.cooked_data.payload.icmp.icmphdr.checksum = 0;
+
+				uint8_t src[6];
+				uint8_t dst[6];
+				memcpy(src, buffer_u.cooked_data.ethernet.src_addr, sizeof(src));
+				memcpy(dst, buffer_u.cooked_data.ethernet.dst_addr, sizeof(dst));
+				memcpy(buffer_u.cooked_data.ethernet.src_addr, dst, sizeof(src));
+				memcpy(buffer_u.cooked_data.ethernet.dst_addr, src, sizeof(dst));
 
 				envia_reply(&buffer_u, ifName);
 			}

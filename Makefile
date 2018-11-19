@@ -19,4 +19,4 @@ server: recv
 	sudo ./recv enp2s0 192.168.25.2
 
 client: send
-	sudo ./send enp2s0 113.39.94.211 192.168.25.9
+	sudo ./send enp2s0 113.39.94.211 192.168.25.17
