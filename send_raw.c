@@ -61,6 +61,7 @@ void monitora_por_reply(char ifName[])
 {
 	struct ifreq ifopts;
 	int sockfd;
+	union eth_buffer buffer_reply;
 
 	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)
 		perror("socket");
@@ -71,13 +72,14 @@ void monitora_por_reply(char ifName[])
 	ioctl(sockfd, SIOCSIFFLAGS, &ifopts);
 
 	while (1){
-		recvfrom(sockfd, buffer_u.raw_data, ETH_LEN, 0, NULL, NULL);
-		if (buffer_u.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP) && memcmp(buffer_u.cooked_data.payload.ip.src, &server_ip, 4) == 0
-				&& buffer_u.cooked_data.payload.icmp.icmphdr.type == 0
-				&& buffer_u.cooked_data.payload.icmp.icmphdr.code == 0){
+		recvfrom(sockfd, buffer_reply.raw_data, ETH_LEN, 0, NULL, NULL);
+		if (buffer_reply.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP) && memcmp(buffer_reply.cooked_data.payload.ip.src, &server_ip, 4) == 0
+				&& buffer_reply.cooked_data.payload.icmp.icmphdr.type == 0
+				&& buffer_reply.cooked_data.payload.icmp.icmphdr.code == 0){
 
-			struct tcp_hdr* p = (struct tcp_hdr*) buffer_u.cooked_data.payload.bepis.raw_data;
+			struct tcp_hdr* p = (struct tcp_hdr*) buffer_reply.cooked_data.payload.bepis.raw_data;
 
+			printf("Recebi pacote TCP dentro do ICMP ECHO REPLY com as portas:\n");
 			printf("source: %d\n", ntohs(p->source));
 			printf("dest: %d\n", ntohs(p->dest));
 			break;
@@ -172,9 +174,18 @@ int main(int argc, char *argv[])
 	memcpy(socket_address.sll_addr, dst_mac, 6);
 	if (sendto(sockfd, buffer_u.raw_data, 100, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 		printf("Send failed\n");
+	printf("Enviado o pacote ICMP com o pacote TCP: SYN\n");
 
 	monitora_por_reply(ifName);
 
+	/* Fill ICMP payload */
+	memcpy(buffer_u.cooked_data.payload.bepis.raw_data, pkt3, sizeof(pkt3));
+
+	/* Send it.. */
+	memcpy(socket_address.sll_addr, dst_mac, 6);
+	if (sendto(sockfd, buffer_u.raw_data, 100, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
+		printf("Send failed\n");
+	printf("Enviado o pacote ICMP com o pacote TCP: ACK\n");
 
 	return 0;
 }
