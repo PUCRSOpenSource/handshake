@@ -76,7 +76,7 @@ void desencapsula_e_envia_tcp(union eth_buffer buffer_tcp, char ifName[])
 	char* p = (char*)&buffer_tcp.cooked_data.payload.bepis.raw_data;
 	memcpy(buffer_tcp.raw_data + sizeof(struct eth_hdr) + sizeof(struct ip_hdr), p, 40);
 
-	printf("Recebi pacote TCP: SYN com as portas abaixo e vou enviar\n");
+	printf("Recebi pacote TCP: com as portas abaixo e vou enviar\n");
 	printf("source: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.source));
 	printf("dest: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.dest));
 	printf("Enviando pacote TCP\n\n");
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 				memcpy(buffer_u.cooked_data.ethernet.dst_addr, src, sizeof(dst));
 
 				/* Fill ICMP payload */
-				printf("Enviado o pacote ICMP com o pacote TCP: SYN ACK\n\n\n");
+				printf("Enviado o pacote ICMP com o pacote TCP\n\n\n");
 				memcpy(buffer_u.cooked_data.payload.bepis.raw_data, pkt2, sizeof(pkt2));
 
 				envia_reply(&buffer_u, ifName);

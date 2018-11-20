@@ -14,6 +14,8 @@
 #include "raw.h"
 #include "tcp_handshake.h"
 
+#define PROTO_ICMP	1
+
 char this_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char dst_mac[6] =	{0xdc, 0xa9, 0x04, 0x7c, 0x3c, 0x4e};
@@ -74,6 +76,7 @@ void monitora_por_reply(char ifName[])
 	while (1){
 		recvfrom(sockfd, buffer_reply.raw_data, ETH_LEN, 0, NULL, NULL);
 		if (buffer_reply.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP) && memcmp(buffer_reply.cooked_data.payload.ip.src, &server_ip, 4) == 0
+				&& buffer_u.cooked_data.payload.ip.proto == PROTO_ICMP
 				&& buffer_reply.cooked_data.payload.icmp.icmphdr.type == 0
 				&& buffer_reply.cooked_data.payload.icmp.icmphdr.code == 0){
 
