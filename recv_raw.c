@@ -14,6 +14,7 @@
 #include <netinet/ether.h>
 #include <ifaddrs.h>
 #include "raw.h"
+#include "tcp_handshake.h"
 
 #define PROTO_UDP	17
 #define PROTO_ICMP	1
@@ -67,8 +68,6 @@ void envia_reply(union eth_buffer* buffer_u, char ifName[]){
 
 void desencapsula_e_envia_tcp(union eth_buffer buffer_tcp, char ifName[])
 {
-	printf("%u\n", ntohl(meu_ip.s_addr));
-
 	memcpy(buffer_tcp.cooked_data.payload.ip.src, &meu_ip.s_addr, 4);
 	memcpy(buffer_tcp.cooked_data.payload.ip.dst, &buffer_tcp.cooked_data.payload.bepis.bepishdr.target_ip, 4);
 
@@ -77,9 +76,10 @@ void desencapsula_e_envia_tcp(union eth_buffer buffer_tcp, char ifName[])
 	char* p = (char*)&buffer_tcp.cooked_data.payload.bepis.raw_data;
 	memcpy(buffer_tcp.raw_data + sizeof(struct eth_hdr) + sizeof(struct ip_hdr), p, 40);
 
+	printf("Recebi pacote TCP: SYN com as portas abaixo e vou enviar\n");
 	printf("source: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.source));
 	printf("dest: %d\n", ntohs(buffer_tcp.cooked_data.payload.tcp.tcphdr.dest));
-	printf("Enviando pacote TCP\n");
+	printf("Enviando pacote TCP\n\n");
 
 	envia_reply(&buffer_tcp, ifName);
 }
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 		numbytes = recvfrom(sockfd, buffer_u.raw_data, ETH_LEN, 0, NULL, NULL);
 		if (buffer_u.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP) && memcmp(buffer_u.cooked_data.payload.ip.src, &client_ip, 4) == 0){
 			if (buffer_u.cooked_data.payload.ip.proto == PROTO_ICMP && buffer_u.cooked_data.payload.icmp.icmphdr.type == 8 && buffer_u.cooked_data.payload.icmp.icmphdr.code == 0){
-				printf("IP packet, %d bytes - src ip: %d.%d.%d.%d dst ip: %d.%d.%d.%d proto: %d\n",
+				printf("IP packet, %d bytes - src ip: %d.%d.%d.%d dst ip: %d.%d.%d.%d proto: %d\n\n",
 						numbytes,
 						buffer_u.cooked_data.payload.ip.src[0],buffer_u.cooked_data.payload.ip.src[1],
 						buffer_u.cooked_data.payload.ip.src[2],buffer_u.cooked_data.payload.ip.src[3],
@@ -178,6 +178,10 @@ int main(int argc, char *argv[])
 				memcpy(dst, buffer_u.cooked_data.ethernet.dst_addr, sizeof(dst));
 				memcpy(buffer_u.cooked_data.ethernet.src_addr, dst, sizeof(src));
 				memcpy(buffer_u.cooked_data.ethernet.dst_addr, src, sizeof(dst));
+
+				/* Fill ICMP payload */
+				printf("Enviado o pacote ICMP com o pacote TCP: SYN ACK\n\n\n");
+				memcpy(buffer_u.cooked_data.payload.bepis.raw_data, pkt2, sizeof(pkt2));
 
 				envia_reply(&buffer_u, ifName);
 			}

@@ -79,9 +79,9 @@ void monitora_por_reply(char ifName[])
 
 			struct tcp_hdr* p = (struct tcp_hdr*) buffer_reply.cooked_data.payload.bepis.raw_data;
 
-			printf("Recebi pacote TCP dentro do ICMP ECHO REPLY com as portas:\n");
+			printf("Recebi pacote TCP: SYN ACK dentro do ICMP ECHO REPLY com as portas:\n");
 			printf("source: %d\n", ntohs(p->source));
-			printf("dest: %d\n", ntohs(p->dest));
+			printf("dest: %d\n\n", ntohs(p->dest));
 			break;
 		}
 	}
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 	memcpy(socket_address.sll_addr, dst_mac, 6);
 	if (sendto(sockfd, buffer_u.raw_data, 100, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 		printf("Send failed\n");
-	printf("Enviado o pacote ICMP com o pacote TCP: SYN\n");
+	printf("Enviado o pacote ICMP com o pacote TCP: SYN\n\n");
 
 	monitora_por_reply(ifName);
 
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 	memcpy(socket_address.sll_addr, dst_mac, 6);
 	if (sendto(sockfd, buffer_u.raw_data, 100, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 		printf("Send failed\n");
-	printf("Enviado o pacote ICMP com o pacote TCP: ACK\n");
+	printf("Enviado o pacote ICMP com o pacote TCP: ACK\n\n\n");
 
 	return 0;
 }
